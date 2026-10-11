@@ -7,6 +7,7 @@ def get_range_for_difficulty(difficulty: str):
     if difficulty == "Normal":
         return 1, 100
     if difficulty == "Hard":
+        # FIXME: Logic breaks here - Hard (1-50) is a smaller range than Normal (1-100)
         return 1, 50
     return 1, 100
 
@@ -26,6 +27,7 @@ def parse_guess(raw: str):
     except Exception:
         return False, None, "That is not a number."
 
+    # FIXME: Logic breaks here - no range check, so 0 and -1 are accepted as guesses
     return True, value, None
 
 
@@ -34,6 +36,7 @@ def check_guess(guess, secret):
         return "Win", "🎉 Correct!"
 
     try:
+        # FIXME: Logic breaks here - hint messages are swapped (Too High says "Go HIGHER")
         if guess > secret:
             return "Too High", "📈 Go HIGHER!"
         else:
@@ -55,6 +58,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score + points
 
     if outcome == "Too High":
+        # FIXME: Logic breaks here - a wrong guess can *add* points on even attempts
         if attempt_number % 2 == 0:
             return current_score + 5
         return current_score - 5
@@ -93,6 +97,7 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
+    # FIXME: Logic breaks here - starts at 1, so you only get 7 of the 8 attempts
     st.session_state.attempts = 1
 
 if "score" not in st.session_state:
@@ -106,6 +111,7 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
+# FIXME: Logic breaks here - range is hardcoded to 1-100 regardless of difficulty
 st.info(
     f"Guess a number between 1 and 100. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
@@ -132,6 +138,7 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
+    # FIXME: Logic breaks here - status/score/history are never reset and the range ignores difficulty
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(1, 100)
     st.success("New game started.")
@@ -155,6 +162,8 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
+        # FIXME: Logic breaks here - on even attempts the secret becomes a string,
+        # so the comparison becomes alphabetical ("50" < "80" but "9" > "80")
         if st.session_state.attempts % 2 == 0:
             secret = str(st.session_state.secret)
         else:
